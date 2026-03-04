@@ -1,0 +1,70 @@
+# Guía para el Prototipo de la API Web de Rafael
+
+El objetivo de esta API y aplicación web es poder probar aisaldamente a la Entidad "Rafael" (Text-to-Speech) de forma interactiva desde el navegador, sin necesidad de cargar toda la interfaz gráfica de Pygame ni el Oyente.
+
+## 1. Librerías Sugeridas
+
+Para un desarrollo ágil y moderno de APIs en Python, se recomienda **FastAPI**. Instálalo junto a su servidor (uvicorn):
+```bash
+pip install fastapi uvicorn
+```
+*(Si prefieres algo más clásico, puedes usar Flask: `pip install flask`)*
+
+---
+
+## 2. Estructura de la carpeta WebAPI
+
+He generado las siguientes carpetas para que empieces a trabajar:
+- `WebAPI/templates/`: Aquí debes guardar tus archivos `.html` (por ejemplo, `index.html`).
+- `WebAPI/static/`: Aquí puedes guardar tus estilos `.css` o tus scripts de frontend `.js`.
+- En la raíz de `WebAPI/` deberás crear tu archivo principal, por ejemplo, `main_api.py`.
+
+---
+
+## 3. Implementación del Backend (`main_api.py`)
+
+Debes crear un script que inicialice el servidor y exponga las "rutas" de tu API. Se requiere lo siguiente:
+
+1. **Importar tu módulo Core**: Necesitas importar a Rafael. Para que funcione desde esta subcarpeta, puede que debas agregar el directorio raíz al path de Python.
+2. **Endpoint GET `/`**: Una ruta que al entrar devuelva el documento HTML alojado en `templates/index.html`.
+3. **Endpoint POST `/api/hablar`**: Una ruta que reciba datos en formato JSON (por ejemplo, `{"texto": "Hola mundo"}`).
+
+**Ejemplo conceptual de la ruta POST:**
+```python
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+from Core.Rafael import Rafael
+
+app = FastAPI()
+rafael_voz = Rafael() # Instancia local
+
+class Mensaje(BaseModel):
+    texto: str
+
+@app.post("/api/hablar")
+async def hablar_rafael(mensaje: Mensaje):
+    # Llama a la funcion TTS de manera síncrona
+    rafael_voz.Voz_del_mundo(mensaje.texto)
+    return {"status": "ok", "leido": mensaje.texto}
+```
+
+---
+
+## 4. Implementación del Frontend (`templates/index.html`)
+
+Debes construir una pequeña interfaz gráfica web de pruebas:
+- Un campo de texto (`<input>`) donde escribirás lo que quieres probar.
+- Un botón (`<button>`) que diga "Probar Voz".
+- Código lógico de **JavaScript**: Añade un evento al botón para que recoja el texto del input y utilice la función `fetch()` para enviar una solicitud `POST` a tu endpoint `/api/hablar`. 
+- *(Opcional)*: Un pequeño recuadro o log en la web que te diga si la petición fue exitosa o falló (para diagnosticar posibles cuelgues de PyTTsx3).
+
+---
+
+## 5. Casos de Uso del Prototipo a validar
+
+1. **Velocidad de respuesta:** ¿Cuánto tarda Rafael en hablar después de darle click al botón en la Web? (Ideal para ver si la latencia es aceptable para luego pasarlo a un LLM).
+2. **Bloqueo Síncrono:** La función `Voz_del_mundo` de `pyttsx3` es bloqueante (`runAndWait()`). Esto provocará que tu API se congele hasta que Rafael termine de hablar. Comprobarlo en un entorno web separado será clave para saber si más adelante ocupas implementar subprocesos (threading) para Rafael y evitar que el juego o la API se congelen.

@@ -1,0 +1,20 @@
+# Variables de entorno
+.env
+.env.*
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+
+#Textos
+Estructura_y_LLM.md
+
