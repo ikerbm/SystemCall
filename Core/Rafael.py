@@ -3,31 +3,39 @@ from Services.llm_service import load_llm
 from langchain_core.messages  import SystemMessage, HumanMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 class Rafael:
     
     def __init__(self,Personaje_activo=None):
+        #Contexto Del Juego
         self.Personaje_activo = Personaje_activo
         self.nombre = "Rafael"
-        self.titulo = "La Voz Del Mundo" 
+        self.titulo = "La Voz Del Mundo"
+        # LLM
         self.llm = load_llm()
-        self.system_prompt = "Eres Rafael, la voz del mundo, un asistente preciso, humano y directo"
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", "Eres Rafael, un asistente inteligent."),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}")
+        ])
+        chain = self.prompt | self.llm
+
         #Historial en memoria RAM
+        self.store= {}
+
+        def get_session_history(session_id: str):
+            if session_id not in self.store:
+                self.store[session_id] = InMemoryChatMessageHistory()
+            return self.store[session_id]
+
         self.chat_history = InMemoryChatMessageHistory()
         self.chain = RunnableWithMessageHistory(
-            self._call_model,
-            lambda session_id: self.chat_history,
+            chain,
+            get_session_history,
             input_messages_key= "input",
             history_messages_key= "history"
         )
-
-    def _call_model(self,inputs):
-        messages = [
-            SystemMessage(content=self.system_prompt),
-            *inputs["history"],
-            HumanMessage(content=inputs["input"])
-        ]
-        return self.llm.invoke(messages)
 
     def Voz_del_mundo(self,mensaje):
         # Inicializa el motor de voz 
