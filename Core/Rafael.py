@@ -15,7 +15,7 @@ class Rafael:
         # LLM
         self.llm = load_llm()
         self.prompt = ChatPromptTemplate.from_messages([
-            ("system", "Eres Rafael, un asistente inteligent."),
+            ("system", "Eres Rafael, un asistente inteligente."),
             MessagesPlaceholder(variable_name="history"),
             ("human", "{input}")
         ])
@@ -43,13 +43,14 @@ class Rafael:
         engine.setProperty('rate', 160)  # Velocidad de habla (palabras por minuto)
         engine.setProperty('volume', 1)  # Volumen (0.0 a 1.0)
 
-        #para ver las voces disponibles
-        # for i, voz in enumerate(voces):
-        #     print(f"Voz {i}: {voz.name} ({voz.languages})")
-
         voces = engine.getProperty('voices')
+        #para ver las voces disponibles
+        for i, voz in enumerate(voces):
+            print(f"Voz {i}: {voz.name} ({voz.languages})")
+
+
         # Selecciona una voz (opcional)
-        engine.setProperty('voice', voces[2].id)  # Cambia el índice para seleccionar otra voz
+        engine.setProperty('voice', voces[0].id)  # Cambia el índice para seleccionar otra voz
 
 
         # Decir el texto
