@@ -1,5 +1,4 @@
 from . import Rafael
-from Entidades import Jugador
 from Magias import Hecate
 
 
@@ -10,7 +9,7 @@ Opciones_presentacion= ["presentar","preséntate","presentación"]
 
 
 class Administrator:
-    def __init__(self,personaje_activo : Jugador,voz_del_mundo : Rafael): # agregar confirmaciones de contenido
+    def __init__(self,personaje_activo,voz_del_mundo : Rafael): # agregar confirmaciones de contenido
         self.personaje_activo = personaje_activo
         self.comando = {}
         self.titulo = "El Administrador"

@@ -1,2 +1,0 @@
-from .JugadorSprite import JugadorSprite
-from .ThermalElementSprite import ThermalElementSprite

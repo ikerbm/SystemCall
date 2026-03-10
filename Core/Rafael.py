@@ -48,10 +48,8 @@ class Rafael:
         for i, voz in enumerate(voces):
             print(f"Voz {i}: {voz.name} ({voz.languages})")
 
-
         # Selecciona una voz (opcional)
         engine.setProperty('voice', voces[0].id)  # Cambia el índice para seleccionar otra voz
-
 
         # Decir el texto
         engine.say(mensaje)
