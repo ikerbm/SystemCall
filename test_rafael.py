@@ -16,7 +16,7 @@ if __name__ == "__main__":
             respuesta = rafael.ask_rafael(user_input)
             
             # Mostrar la respuesta en consola
-            print("Rafael:", respuesta)
+            #print("Rafael:", respuesta)
             
             # 3. Hacer que Rafael hable (vocalizar la respuesta)
             rafael.Voz_del_mundo(respuesta)
