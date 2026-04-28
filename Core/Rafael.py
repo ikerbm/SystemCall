@@ -1,7 +1,8 @@
 import pyttsx3
 from Services.llm_service import load_llm
-from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import FileChatMessageHistory
+import os
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from TTS.api import TTS
 import sounddevice as sd
@@ -47,17 +48,19 @@ class Rafael:
         ])
         chain = self.prompt | self.llm
 
-        #Historial en memoria RAM
-        self.store= {}
-        #TTSs
+        # Carpeta de memoria persistente
+        self.memory_dir = "Memoria_Rafael"
+        if not os.path.exists(self.memory_dir):
+            os.makedirs(self.memory_dir)
+            
+        # TTSs
         self.tts = TTS(model_name="tts_models/es/css10/vits")
 
         def get_session_history(session_id: str):
-            if session_id not in self.store:
-                self.store[session_id] = InMemoryChatMessageHistory()
-            return self.store[session_id]
-
-        self.chat_history = InMemoryChatMessageHistory()
+            # Limpiamos caracteres raros en caso de que lleguen para prevenir errores de ruta
+            safe_id = "".join([c for c in str(session_id) if c.isalnum() or c in ('-', '_')])
+            file_path = os.path.join(self.memory_dir, f"{safe_id}.json")
+            return FileChatMessageHistory(file_path)
         self.chain = RunnableWithMessageHistory(
             chain,
             get_session_history,
