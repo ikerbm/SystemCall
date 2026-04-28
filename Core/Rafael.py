@@ -75,9 +75,9 @@ class Rafael:
         sd.play(audio, samplerate=22050)
         sd.wait()
 
-    def ask_rafael(self,user_input):
+    def ask_rafael(self,user_input, session_id ="default"):
         response = self.chain.invoke(
             {"input": user_input},
-            config={"configurable": {"session_id": "default"}}
+            config={"configurable": {"session_id": session_id}}
         )
         return response.content
