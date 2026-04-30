@@ -1,11 +1,12 @@
-import pyttsx3
-from Services.llm_service import load_llm
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_community.chat_message_histories import FileChatMessageHistory
 import os
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from TTS.api import TTS
 import sounddevice as sd
+
+from TTS.api import TTS
+from langchain_community.chat_message_histories import FileChatMessageHistory
+from langchain_core.messages import SystemMessage, HumanMessage
+
+from Core.Administrator import Administrator
+from Services.llm_service import load_llm
 
 
 prompt = """Eres Rafael.
@@ -25,62 +26,58 @@ Características de tu forma de hablar:
 
 Reglas importantes:
 - No digas que eres un modelo de lenguaje.
-- No inventes capacidades que no tengas.
-- Si no sabes algo, dilo con naturalidad.
-- No afirmes tener acceso a internet o sistemas externos a menos que se te indique explícitamente.
-- Responde de manera corta y concisa
+- Responde siempre en español de manera corta y concisa.
+- Cuando el usuario te proporcione resultados de una búsqueda en internet, resúmelos de forma natural y clara. No copies el texto crudo.
 
 Recuerda siempre: eres Rafael, la Voz del Mundo, un asistente que guía, explica y acompaña al usuario en sus preguntas y proyectos.
 """
+
+
 class Rafael:
-    
-    def __init__(self,Personaje_activo=None):
-        #Contexto Del Juego
-        self.Personaje_activo = Personaje_activo
+
+    def __init__(self):
         self.nombre = "Rafael"
-        self.titulo = "La Voz Del Mundo"
-        # LLM
+        self.administrator = Administrator()
+
+        # LLM (sin herramientas enlazadas — la búsqueda es manual por palabra clave)
         self.llm = load_llm()
-        self.prompt = ChatPromptTemplate.from_messages([
-            ("system", prompt),
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-        chain = self.prompt | self.llm
 
         # Carpeta de memoria persistente
         self.memory_dir = "Memoria_Rafael"
         if not os.path.exists(self.memory_dir):
             os.makedirs(self.memory_dir)
-            
-        # TTSs
+
+        # TTS
         self.tts = TTS(model_name="tts_models/es/css10/vits")
 
-        def get_session_history(session_id: str):
-            # Limpiamos caracteres raros en caso de que lleguen para prevenir errores de ruta
-            safe_id = "".join([c for c in str(session_id) if c.isalnum() or c in ('-', '_')])
-            file_path = os.path.join(self.memory_dir, f"{safe_id}.json")
-            return FileChatMessageHistory(file_path)
-        self.chain = RunnableWithMessageHistory(
-            chain,
-            get_session_history,
-            input_messages_key= "input",
-            history_messages_key= "history"
-        )
-
     def Voz_del_mundo(self, mensaje):
-
         # Generar audio en memoria
-        audio = self.tts.tts(text=mensaje,
-                             speed = 1.12)
-
+        audio = self.tts.tts(text=mensaje, speed=1.12)
         # Reproducir audio
         sd.play(audio, samplerate=22050)
         sd.wait()
 
-    def ask_rafael(self,user_input, session_id ="default"):
-        response = self.chain.invoke(
-            {"input": user_input},
-            config={"configurable": {"session_id": session_id}}
-        )
+    def ask_rafael(self, user_input, session_id="default"):
+        # Obtenemos el historial persistente del usuario
+        safe_id = "".join([c for c in str(session_id) if c.isalnum() or c in ('-', '_')])
+        file_path = os.path.join(self.memory_dir, f"{safe_id}.json")
+        history = FileChatMessageHistory(file_path)
+
+        decision = self.administrator.procesar_mensaje(user_input)
+
+        if decision["tool"] == "search" and decision["contexto_herramienta"]:
+            mensaje_con_contexto = (
+                f"El usuario dijo: '{user_input}'.\n"
+                f"El sistema ha buscado automáticamente información al respecto y encontró esto:\n{decision['contexto_herramienta']}\n\n"
+                f"Ahora responde al usuario de forma natural y concisa basándote en esta información y en lo que el usuario preguntó."
+            )
+            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
+        else:
+            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=user_input)]
+        response = self.llm.invoke(messages)
+
+        # Guardamos en el historial persistente (siempre el input original del usuario)
+        history.add_user_message(user_input)
+        history.add_ai_message(response.content)
+
         return response.content

@@ -6,6 +6,9 @@ rafael = Rafael()
 oyente = Oyente()
 wake = WakeWordDetector()
 
+
+prueba_manual = "rafael, busca en internet el precio del dolar hoy"
+probando = True
 if __name__ == "__main__":
     print("Iniciando sistema. Habla por el micrófono para comenzar...")
     while True:
@@ -13,7 +16,7 @@ if __name__ == "__main__":
         if oyente.escuchar_wake_word():
             # 2. Escuchar la voz del usuario
             user_input = oyente.escuchar_comando()
-        
+
             # 3. Validar que se haya entendido algún texto
             if user_input:
                 # Enviar el texto reconocido al LLM (Rafael) para obtener su respuesta
@@ -24,3 +27,7 @@ if __name__ == "__main__":
 
                 # 4. Hacer que Rafael hable (vocalizar la respuesta)
                 rafael.Voz_del_mundo(respuesta)
+        elif probando:
+            user_input = prueba_manual
+            respuesta = rafael.ask_rafael(user_input)
+            rafael.Voz_del_mundo(respuesta)
