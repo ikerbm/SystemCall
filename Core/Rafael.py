@@ -27,7 +27,8 @@ Características de tu forma de hablar:
 Reglas importantes:
 - No digas que eres un modelo de lenguaje.
 - Responde siempre en español de manera corta y concisa.
-- Cuando el usuario te proporcione resultados de una búsqueda en internet, resúmelos de forma natural y clara. No copies el texto crudo.
+- Tienes la capacidad de reproducir música en Spotify y buscar en internet mediante herramientas del sistema. Si el sistema te indica en el mensaje que ya ejecutó la acción (ej. "El sistema de Spotify ha ejecutado..."), asume que TÚ lo hiciste y simplemente confírmaselo al usuario (ej: "¡Claro! Ya estoy reproduciendo..."). NUNCA digas que no tienes la capacidad de hacerlo.
+- Cuando el sistema te proporcione resultados de una búsqueda en internet, resúmelos de forma natural y clara. No copies el texto crudo.
 
 Recuerda siempre: eres Rafael, la Voz del Mundo, un asistente que guía, explica y acompaña al usuario en sus preguntas y proyectos.
 """
@@ -70,6 +71,13 @@ class Rafael:
                 f"El usuario dijo: '{user_input}'.\n"
                 f"El sistema ha buscado automáticamente información al respecto y encontró esto:\n{decision['contexto_herramienta']}\n\n"
                 f"Ahora responde al usuario de forma natural y concisa basándote en esta información y en lo que el usuario preguntó."
+            )
+            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
+        elif decision["tool"] == "spotify" and decision["contexto_herramienta"]:
+            mensaje_con_contexto = (
+                f"El usuario pidió música: '{user_input}'.\n"
+                f"El sistema de Spotify ya ha ejecutado la acción con este resultado:\n{decision['contexto_herramienta']}\n\n"
+                f"Responde al usuario confirmando alegremente que ya se está reproduciendo la música solicitada, o infórmale del error de forma natural si el resultado dice que no se pudo."
             )
             messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
         else:

@@ -4,17 +4,19 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from Services.llm_service import load_llm
 from Services.search_service import buscar
+from Services.spotify_service import play_music
 
 admin_prompt = """Eres el Administrador del sistema. Tu función es analizar el mensaje del usuario y decidir qué acción debe tomar el asistente (Rafael) antes de responder.
 
 Herramientas disponibles:
 - "search": Útil cuando el usuario necesita información actualizada, noticias, clima, datos precisos de internet o cuando pide explícitamente buscar algo.
+- "spotify": Útil cuando el usuario te pide explícitamente reproducir música, una canción, o poner algo en Spotify.
 - "none": Para conversación general, saludos, preguntas teóricas, matemáticas, o cuando no se necesite información externa para responder correctamente.
 
 Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura, sin texto adicional:
 {
-    "tool": "search" o "none",
-    "query": "Si elegiste 'search', escribe aquí la mejor consulta de búsqueda para Google. Si elegiste 'none', déjalo vacío."
+    "tool": "search" o "spotify" o "none",
+    "query": "Si elegiste 'search' o 'spotify', escribe aquí la mejor consulta para la búsqueda. Si elegiste 'none', déjalo vacío."
 }
 """
 
@@ -81,6 +83,13 @@ class Administrator:
             except Exception as e:
                 print(f"[Administrator] Error al ejecutar la búsqueda en internet: {e}")
                 resultado_herramienta = "Hubo un error al intentar buscar en internet."
+        elif tool == "spotify" and query:
+            print(f"[Administrator] Acción decidida: Reproducir música. Ejecutando query: '{query}'")
+            try:
+                resultado_herramienta = play_music(query)
+            except Exception as e:
+                print(f"[Administrator] Error al usar Spotify: {e}")
+                resultado_herramienta = "Hubo un error al intentar reproducir en Spotify. Quizás Spotify no está abierto o no tienes dispositivos activos."
         else:
             print(f"[Administrator] Acción decidida: Conversación normal (ninguna herramienta extra).")
 
