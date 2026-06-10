@@ -6,7 +6,7 @@ from langchain_community.chat_message_histories import FileChatMessageHistory
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from Core.Administrator import Administrator
-from Services.llm_service import load_llm
+from Services.llm_service import load_llm_mistral
 
 
 prompt = """Eres Rafael.
@@ -41,7 +41,7 @@ class Rafael:
         self.administrator = Administrator()
 
         # LLM (sin herramientas enlazadas — la búsqueda es manual por palabra clave)
-        self.llm = load_llm()
+        self.llm = load_llm_mistral()
 
         # Carpeta de memoria persistente
         self.memory_dir = "Memoria_Rafael"

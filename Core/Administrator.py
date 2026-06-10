@@ -2,7 +2,7 @@ import os
 import json
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from Services.llm_service import load_llm
+from Services.llm_service import load_llm_llama
 from Services.search_service import buscar
 from Services.spotify_service import play_music
 
@@ -25,7 +25,7 @@ class Administrator:
     def __init__(self):
         self.nombre = "Administrator"
         # Usamos el mismo servicio de LLM que usa Rafael
-        self.llm = load_llm()
+        self.llm = load_llm_llama()
 
     def procesar_mensaje(self, user_input: str) -> dict:
         """
