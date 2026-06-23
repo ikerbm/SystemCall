@@ -52,7 +52,7 @@ Seguridad y privacidad:
 
 class Rafael:
 
-    def __init__(self):
+    def __init__(self, use_tts = True):
         self.nombre = "Rafael"
         self.administrator = Administrator()
 
@@ -65,7 +65,8 @@ class Rafael:
             os.makedirs(self.memory_dir)
 
         # TTS
-        self.tts = TTS(model_name="tts_models/es/css10/vits")
+        if use_tts:
+            self.tts = TTS(model_name="tts_models/es/css10/vits")
 
     def Voz_del_mundo(self, mensaje):
         # Generar audio en memoria
