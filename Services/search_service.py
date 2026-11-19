@@ -1,16 +1,19 @@
-from datetime import datetime
-from langchain_community.tools import DuckDuckGoSearchRun
+from urllib.parse import urlsplit, urlunsplit
+import logging
+
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 
 
+logger = logging.getLogger(__name__)
+
 # Configuración del motor de búsqueda
 _search_wrapper = DuckDuckGoSearchAPIWrapper(
-    max_results=10
+    max_results=5,
+    region="co-es",
+    safesearch="moderate",
+    time=None,
 )
 
-_search_engine = DuckDuckGoSearchRun(
-    api_wrapper=_search_wrapper
-)
 
 
 def _generar_consultas(query: str) -> list[str]:
@@ -18,35 +21,23 @@ def _generar_consultas(query: str) -> list[str]:
     Genera variantes de la consulta para ampliar la cobertura
     de la búsqueda y evitar depender de una sola respuesta.
     """
-    año_actual = datetime.now().year
 
     return [
         query,
         f"{query} explicación",
-        f"{query} documentación",
-        f"{query} ejemplos",
-        f"{query} {año_actual}",
+        f"{query} documentación oficial",
     ]
 
-
-def _agregar_si_es_nuevo(resultado: str, resultados: list[str]) -> None:
+def _normalizar_url(url: str) -> str:
     """
-    Evita agregar resultados idénticos o vacíos.
+    Normaliza URLs para evitar resultados duplicados.
     """
-    if not resultado:
-        return
-
-    texto_normalizado = resultado.strip().lower()
-
-    if not texto_normalizado:
-        return
-
-    for existente in resultados:
-        if texto_normalizado == existente.strip().lower():
-            return
-
-    resultados.append(resultado.strip())
-
+    try:
+        parsed = urlsplit(url.strip())
+        # Reconstruye la URL sin query ni fragmento
+        return urlunsplit((parsed.scheme.lower(), parsed.netloc.lower(), parsed.path.rstrip("/"), parsed.query, '')).lower()
+    except Exception:
+        return url.strip().lower()
 
 def buscar(query: str) -> str:
     """
@@ -59,24 +50,43 @@ def buscar(query: str) -> str:
         return "No se proporcionó un término de búsqueda."
 
     query = query.strip()
+    resultados = []
+    urls_encontrados = set()
 
     try:
-        resultados = []
+        respuesta = _search_wrapper.results(query,max_results =5)
+        for resultado in respuesta:         
+            titulo = resultado.get("title", "")
+            url = resultado.get("link", "")
+            snippet = resultado.get("snippet", "")
 
-        for consulta in _generar_consultas(query):
-            try:
-                respuesta = _search_engine.run(consulta)
-                _agregar_si_es_nuevo(respuesta, resultados)
-
-            except Exception:
-                # Ignora errores individuales para que una
-                # consulta fallida no arruine toda la búsqueda.
+            if not url or not snippet:
                 continue
+            
+            url_normalizada = _normalizar_url(url)
+            if url_normalizada in urls_encontrados:
+                continue
+            
+            urls_encontrados.add(url_normalizada)
+            resultados.append({
+                "titulo": titulo,
+                "url": url,
+                "contenido": snippet                
+            })
 
         if not resultados:
             return "No se encontraron resultados relevantes."
 
-        return "\n\n" + ("\n\n" + ("-" * 80) + "\n\n").join(resultados)
+        salida = []
+        for i, res in enumerate(resultados[:5], 1):
+            salida.append(
+                f"RESULTADO {i}\n"
+                f"título: {res['titulo']}\n"
+                f"URL: {res['url']}\n"
+                f"Informacion: {res['contenido']}"
+            )
+        return "\n\n" + "\n\n".join(salida)
 
     except Exception as e:
+        logger.error("Error durante la búsqueda: %s", str(e))
         return f"No se pudo completar la búsqueda: {str(e)}"

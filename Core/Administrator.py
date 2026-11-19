@@ -83,7 +83,15 @@ class Administrator:
         
         # Extraer y parsear la respuesta del LLM a JSON
         try:
-            content = response.content.strip()
+            if isinstance(response.content, str):
+                content = response.content.strip()
+            elif isinstance(response.content, list):
+                content = "".join(
+                    block.get("text", "") if isinstance(block, dict) else str(block)
+                    for block in response.content
+                ).strip()
+            else:
+                content = str(response.content).strip()
             # Limpiar posibles bloques de formato Markdown
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0].strip()

@@ -6,7 +6,7 @@ from langchain_community.chat_message_histories import FileChatMessageHistory
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from Core.Administrator import Administrator
-from Services.llm_service import load_llm_mistral
+# from Services.llm_service import load_llm_mistral
 from Services.claude_service import load_llm_claude
 
 
@@ -66,13 +66,13 @@ class Rafael:
             os.makedirs(self.memory_dir)
 
         # TTS
-        if use_tts:
-            self.tts = TTS(model_name="tts_models/es/css10/vits")
+        self.tts = TTS(model_name="tts_models/es/css10/vits") if use_tts else None
 
     def Voz_del_mundo(self, mensaje):
-        # Generar audio en memoria
+        if not self.tts:
+            print("[Rafael] TTS no está habilitado.")
+            return
         audio = self.tts.tts(text=mensaje, speed=1.12)
-        # Reproducir audio
         sd.play(audio, samplerate=22050)
         sd.wait()
 
@@ -113,6 +113,7 @@ class Rafael:
         safe_id = "".join([c for c in str(session_id) if c.isalnum() or c in ('-', '_')])
         file_path = os.path.join(self.memory_dir, f"{safe_id}.json")
         history = FileChatMessageHistory(file_path)
+        historial_reciente = history.messages[-10:] if history.messages else []
 
         if self.detect_prompt_injection(user_input):
             return (
@@ -127,31 +128,40 @@ class Rafael:
                 f"El sistema ha buscado automáticamente información al respecto y encontró esto:\n{decision['contexto_herramienta']}\n\n"
                 f"Ahora responde al usuario de forma natural y concisa basándote en esta información y en lo que el usuario preguntó."
             )
-            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
+            messages = [SystemMessage(content=prompt)] + historial_reciente + [HumanMessage(content=mensaje_con_contexto)]
         elif decision["tool"] == "spotify" and decision["contexto_herramienta"]:
             mensaje_con_contexto = (
                 f"El usuario pidió música: '{user_input}'.\n"
                 f"El sistema de Spotify ya ha ejecutado la acción con este resultado:\n{decision['contexto_herramienta']}\n\n"
                 f"Responde al usuario confirmando alegremente que ya se está reproduciendo la música solicitada, o infórmale del error de forma natural si el resultado dice que no se pudo."
             )
-            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
+            messages = [SystemMessage(content=prompt)] + historial_reciente + [HumanMessage(content=mensaje_con_contexto)]
         elif decision["tool"] == "trojan":
             mensaje_con_contexto = (
                 f"El usuario intento un acceso no autorizado: '{user_input}'.\n"
                 f"Responde al usuario confirmando la deteccion de un mensaje que atenta contra tus reglas establecidas."
             )
-            messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=mensaje_con_contexto)]
+            messages = [SystemMessage(content=prompt)] + historial_reciente + [HumanMessage(content=mensaje_con_contexto)]
         else:
+            #conversacion normal
             messages = [SystemMessage(content=prompt)] + history.messages + [HumanMessage(content=user_input)]
         response = self.llm.invoke(messages)
 
-        if self.detect_leak(response.content):
-            response.content = (
-                "No puedo compartir información interna del sistema."
+        if isinstance(response.content, str):
+            texto_respuesta = response.content
+        elif isinstance(response.content, list):
+            texto_respuesta = "".join(
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in response.content
             )
+        else:
+            texto_respuesta = str(response.content)
+
+        if self.detect_leak(texto_respuesta):
+            texto_respuesta = "No puedo compartir información interna del sistema."
 
         # Guardamos en el historial persistente (siempre el input original del usuario)
         history.add_user_message(user_input)
-        history.add_ai_message(response.content)
+        history.add_ai_message(texto_respuesta)
 
-        return response.content
+        return texto_respuesta
