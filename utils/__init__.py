@@ -1,1 +1,0 @@
-from .RecorteSabana import cortar_sprites

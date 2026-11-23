@@ -18,3 +18,13 @@ __pycache__/
 #Textos
 Estructura_y_LLM.md
 
+#Memorias
+Memoria_Rafael
+
+#cache
+.cache
+
+# Frontend / Node
+node_modules/
+UI/node_modules/
+UI/dist/

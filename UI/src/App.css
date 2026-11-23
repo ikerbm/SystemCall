@@ -1,0 +1,102 @@
+.app-main-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  position: relative;
+}
+
+/* ZONA IZQUIERDA: 60% */
+.zone-sphere-container {
+  flex: 0 0 60%;
+  width: 60%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ZONA DERECHA: 40% */
+.zone-chat-container {
+  flex: 0 0 40%;
+  width: 40%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Toggle móvil (oculto en escritorio) */
+.mobile-nav-toggle {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  background: rgba(3, 7, 18, 0.85);
+  border: 1px solid var(--border-glass);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+  backdrop-filter: blur(12px);
+}
+
+.mobile-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-tab-btn.active {
+  background: var(--neon-green);
+  color: #030712;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+/* Adaptación Responsive para Tablets y Móviles */
+@media (max-width: 960px) {
+  .app-main-layout {
+    flex-direction: column;
+  }
+
+  .mobile-nav-toggle {
+    display: flex;
+  }
+
+  .zone-sphere-container {
+    flex: 1 1 50%;
+    width: 100%;
+    height: 50%;
+  }
+
+  .zone-chat-container {
+    flex: 1 1 50%;
+    width: 100%;
+    height: 50%;
+  }
+
+  .zone-sphere-container.mobile-hidden,
+  .zone-chat-container.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Cuando uno se oculta, el otro toma el 100% de la pantalla */
+  .zone-sphere-container:not(.mobile-hidden) {
+    flex: 1 1 100%;
+    height: 100%;
+  }
+
+  .zone-chat-container:not(.mobile-hidden) {
+    flex: 1 1 100%;
+    height: 100%;
+  }
+}
