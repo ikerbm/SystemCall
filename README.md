@@ -1,62 +1,108 @@
-# System Call (Rafael - La Voz del Mundo)
+# SystemCall — Rafael AI
 
-System Call es un asistente de Inteligencia Artificial llamado **Rafael**, diseñado para interactuar de forma natural mediante voz y a través de Telegram. Utiliza modelos de lenguaje locales (Llama 3.1 a través de Ollama) y síntesis de voz avanzada (TTS) para ofrecer una experiencia conversacional fluida.
+**Rafael** es un asistente de IA conversacional con interfaz web 3D, bot de Telegram y síntesis de voz. Usa **Claude (Anthropic)** como LLM principal, búsqueda web con DuckDuckGo y control de Spotify.
 
-## 🚀 Instalación y Configuración
+---
 
-1. **Crear un entorno virtual**:
-   ```bash
-   python -m venv venv
-   ```
+## Capacidades
 
-2. **Activar el entorno virtual**:
-   - En Windows: `venv\Scripts\activate`
-   - En macOS/Linux: `source venv/bin/activate`
+- 💬 **Chat web** — Interfaz React con esfera de partículas 3D que reacciona al estado del asistente
+- 🤖 **Bot de Telegram** — Sesiones independientes por usuario con historial persistente
+- 🔍 **Búsqueda web** — DuckDuckGo en tiempo real, sin API key
+- 🎵 **Control de Spotify** — Reproduce música por comando de voz o texto
+- 🧠 **Memoria persistente** — Historial de conversación por sesión en JSON local
+- 🔒 **Seguridad** — Detección de prompt injection y filtrado de fugas de configuración interna
 
-3. **Instalar dependencias**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+---
 
-4. **Instalar y configurar Ollama**:
-   Asegúrate de tener [Ollama](https://ollama.com/) instalado y funcionando con el modelo `llama3.1:8b` (o ajusta el modelo en `Services/llm_service.py`):
-   ```bash
-   ollama run llama3.1:8b
-   ```
+## Requisitos previos
 
-5. **Configurar el entorno (.env)**:
-   Crea un archivo `.env` en la raíz del proyecto y añade tu token de Telegram y de Porcupine (opcional para Wake Word):
-   ```env
-   TELEGRAM_API_KEY=tu_token_aqui
-   ```
+- Python 3.11+
+- Node.js 20+ y npm (solo para la UI web)
+- Cuenta de [Anthropic](https://console.anthropic.com/) con API key
+- App de [Spotify Developer](https://developer.spotify.com/) con OAuth configurado *(opcional)*
+- Bot de Telegram creado con [@BotFather](https://t.me/botfather) *(opcional)*
 
-## 🎮 Uso
+---
 
-El proyecto tiene dos modos de operación principales:
+## Instalación
 
-### 1. Asistente por Voz (`test_rafael.py`)
-Puedes hablarle por micrófono diciendo la palabra clave "Rafael" (configurado en `Core/Oyente.py`). El asistente te escuchará, procesará tu entrada usando `faster-whisper` y responderá en voz alta con TTS.
+### 1. Backend Python
+
 ```bash
-python test_rafael.py
+# Crear y activar entorno virtual
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS / Linux
+
+# Instalar dependencias
+pip install -r requirements.txt
 ```
 
-### 2. Bot de Telegram
-Puedes interactuar con Rafael a través de un chat de Telegram. Esto ejecuta un proceso que mantiene una memoria independiente para cada chat (basada en el ID de usuario o grupo).
-```bash
-# Ejecutar el bot de Telegram
-python -m Services.Bots.telegram_rafael
+### 2. Frontend (UI web)
 
-# O usar el script de Windows incluido
+```bash
+cd UI
+npm install
+```
+
+### 3. Variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+CLIENT_ID_SPOTIFY=...
+CLIENT_SECRET_SPOTIFY=...
+TELEGRAM_API_KEY=...
+```
+
+---
+
+## Uso
+
+```bash
+# API backend (requerida para la UI web)
+python api_server.py
+
+# UI web en http://localhost:3000
+iniciar_ui.bat          # Windows
+# cd UI && npm run dev  # manual
+
+# Bot de Telegram
 iniciar_bot_telegram.bat
+# python -m Services.Bots.telegram_rafael
 ```
 
-## 🏗️ Arquitectura y Estructura del Proyecto
+---
 
-* **`Core/`**: Contiene el cerebro y los sentidos del sistema.
-  * `Rafael.py`: La clase principal que maneja la memoria persistente, la conexión con LangChain/Ollama y la generación de voz mediante TTS.
-  * `Oyente.py`: Sistema de reconocimiento de voz usando `faster-whisper` y `speech_recognition` para la transcripción de comandos y detección de "wake word".
-* **`Services/`**: Servicios externos e integraciones.
-  * `llm_service.py`: Configura y provee la conexión con el modelo de lenguaje local (Ollama).
-  * `wake_word.py`: Detección de palabra clave de activación utilizando `pvporcupine`.
-  * `Bots/telegram_rafael.py`: Integración con la API de Telegram usando `telebot`.
-* **`Memoria_Rafael/`**: Almacenamiento local persistente donde se guardan los historiales de chat en formato JSON, manteniendo el contexto de cada sesión o chat de Telegram.
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| LLM | Claude (`claude-haiku-5-5`) vía `langchain-anthropic` |
+| Backend API | Flask (`api_server.py`) en puerto 8000 |
+| Frontend | React 18 + Vite + Three.js |
+| Búsqueda web | DuckDuckGo (`langchain-community`) |
+| Música | Spotipy (Spotify Web API) |
+| Bot mensajería | pyTelegramBotAPI (`telebot`) |
+| Memoria | `FileChatMessageHistory` (JSON local) |
+| TTS (voz) | Coqui TTS — modelo `tts_models/es/css10/vits` |
+| STT (escucha) | Faster-Whisper `base` + SpeechRecognition |
+
+---
+
+## Estructura
+
+```
+SystemCall/
+├── Core/               # Rafael (asistente), Administrator (enrutador), Oyente (voz)
+├── Services/           # Claude, LLMs locales, búsqueda, Spotify, bot Telegram
+├── UI/                 # Frontend React (esfera 3D + chat)
+├── Documentation/      # Docs detalladas por módulo
+├── Memoria_Rafael/     # Historiales de sesión (JSON, gitignored)
+├── api_server.py       # API REST Flask
+└── .env                # Credenciales (no subir al repo)
+```
+
+> La documentación detallada de cada módulo está en [`Documentation/`](Documentation/).
