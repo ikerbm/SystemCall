@@ -90,81 +90,18 @@ async def login(payload: LoginRequest) -> AuthSessionResponse:
 @router.post(
     "/signup",
     response_model=SignUpResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="User Registration",
-    description="Registers a new user in Supabase Auth with email and password.",
+    status_code=status.HTTP_403_FORBIDDEN,
+    summary="User Registration (Disabled)",
+    description="Account registration is currently disabled.",
 )
 async def sign_up(payload: SignUpRequest) -> SignUpResponse:
     """
-    Register a new user account.
+    Registration is temporarily disabled.
     """
-    client = get_supabase_client()
-    try:
-        credentials = {
-            "email": payload.email,
-            "password": payload.password,
-        }
-        if payload.user_metadata:
-            credentials["options"] = {"data": payload.user_metadata}
-
-        auth_response = client.auth.sign_up(credentials)
-        user = auth_response.user
-        session = auth_response.session
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Signup failed: User was not created.",
-            )
-
-        user_data = UserResponse(
-            id=str(user.id),
-            email=user.email,
-            role=user.role,
-            user_metadata=user.user_metadata or {},
-            app_metadata=user.app_metadata or {},
-            created_at=str(user.created_at) if user.created_at else None,
-        )
-
-        session_data = None
-        if session:
-            session_data = AuthSessionResponse(
-                access_token=session.access_token,
-                refresh_token=session.refresh_token,
-                token_type=session.token_type or "bearer",
-                expires_in=session.expires_in,
-                user=user_data,
-            )
-
-        message = (
-            "Registration successful. Please check your email to confirm your account."
-            if not session
-            else "Registration successful."
-        )
-
-        return SignUpResponse(
-            message=message,
-            user=user_data,
-            session=session_data,
-        )
-
-    except AuthApiError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Registration failed: {e.message}",
-        )
-    except AuthError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Supabase Auth error: {str(e)}",
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected signup error: {str(e)}",
-        )
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="El registro de nuevas cuentas está temporalmente deshabilitado.",
+    )
 
 
 @router.post(
