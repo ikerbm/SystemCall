@@ -72,6 +72,9 @@ iniciar_ui.bat          # Windows
 # Bot de Telegram
 iniciar_bot_telegram.bat
 # python -m Services.Bots.telegram_rafael
+
+#iniciar el api de Fastapi
+uvicorn API.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ---
